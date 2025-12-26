@@ -88,59 +88,61 @@ export function Hero({ videoSrc }: HeroProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left: Featured Character */}
           <motion.div
-            key={character.id}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
-            className="order-2 lg:order-1"
+            className="order-2 lg:order-1 flex justify-center lg:justify-start"
           >
-            <div className="relative group">
-              {/* Glow effect behind card */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-accent-500/20 via-cosmic-500/20 to-accent-500/20 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
+            {/* Stacked Cards Container */}
+            <div className="relative w-[260px] h-[380px]">
+              {/* Glow effect behind stack */}
+              <div className="absolute inset-0 bg-gradient-to-r from-accent-500/30 via-cosmic-500/30 to-energy-500/30 rounded-2xl blur-2xl opacity-60" />
 
-              <Card
-                variant="glass"
-                padding="none"
-                className="relative overflow-hidden rounded-2xl border border-white/10"
-              >
-                <div className="flex flex-col sm:flex-row">
-                  {/* Character Image */}
-                  <div className="relative w-full sm:w-40 md:w-48 flex-shrink-0 max-h-[280px] overflow-hidden">
-                    {character.image ? (
-                      <Image
-                        src={character.image}
-                        alt={character.name}
-                        width={192}
-                        height={280}
-                        className="object-cover object-top w-full h-full"
-                        priority
-                      />
-                    ) : (
-                      <div className="aspect-[2/3] relative">
-                        <div
-                          className={`absolute inset-0 ${
-                            character.color === "cosmic"
-                              ? "bg-gradient-to-br from-cosmic-600/40 via-cosmic-800/60 to-background"
-                              : character.color === "energy"
-                              ? "bg-gradient-to-br from-energy-600/40 via-energy-800/60 to-background"
-                              : "bg-gradient-to-br from-accent-600/40 via-accent-800/60 to-background"
-                          }`}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span
-                            className={`text-8xl font-display font-bold opacity-20 ${
-                              character.color === "cosmic"
-                                ? "text-cosmic-300"
-                                : character.color === "energy"
-                                ? "text-energy-300"
-                                : "text-accent-300"
-                            }`}
-                          >
-                            {character.name[0]}
-                          </span>
-                        </div>
-                      </div>
-                    )}
+              {/* Back card (3rd) */}
+              <div className="absolute top-0 left-0 w-full h-full transform translate-x-6 -translate-y-3 rotate-6">
+                <div className="w-full h-full rounded-2xl border border-white/10 overflow-hidden bg-background-secondary/80 backdrop-blur-sm">
+                  <Image
+                    src={character.image || ""}
+                    alt="Character"
+                    width={260}
+                    height={380}
+                    className="object-cover object-top w-full h-full opacity-60"
+                  />
+                </div>
+              </div>
+
+              {/* Middle card (2nd) */}
+              <div className="absolute top-0 left-0 w-full h-full transform translate-x-3 -translate-y-1.5 rotate-3">
+                <div className="w-full h-full rounded-2xl border border-white/10 overflow-hidden bg-background-secondary/80 backdrop-blur-sm">
+                  <Image
+                    src={character.image || ""}
+                    alt="Character"
+                    width={260}
+                    height={380}
+                    className="object-cover object-top w-full h-full opacity-80"
+                  />
+                </div>
+              </div>
+
+              {/* Front card (main) */}
+              <div className="absolute top-0 left-0 w-full h-full group">
+                <Card
+                  variant="glass"
+                  padding="none"
+                  className="w-full h-full overflow-hidden rounded-2xl border border-white/20 shadow-2xl"
+                >
+                  <div className="relative w-full h-full">
+                    <Image
+                      src={character.image || ""}
+                      alt={character.name}
+                      width={260}
+                      height={380}
+                      className="object-cover object-top w-full h-full"
+                      priority
+                    />
+
+                    {/* Gradient overlay for text */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
 
                     {/* Status badge */}
                     <div className="absolute top-3 left-3">
@@ -155,37 +157,36 @@ export function Hero({ videoSrc }: HeroProps) {
                         {status.label}
                       </Badge>
                     </div>
-                  </div>
 
-                  {/* Character Info - side panel */}
-                  <div className="p-5 flex flex-col justify-center bg-background-secondary/50 backdrop-blur-sm flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-mono text-xs text-text-tertiary">
+                    {/* Character number */}
+                    <div className="absolute top-3 right-3">
+                      <span className="font-mono text-xs text-white/70 backdrop-blur-sm bg-background/30 px-2 py-1 rounded">
                         #{character.number}
                       </span>
-                      <span className="text-xs text-text-tertiary">•</span>
-                      <span className="text-xs text-text-secondary">
-                        {character.role}
-                      </span>
                     </div>
-                    <h2 className="font-display text-2xl font-bold text-text-primary mb-2">
-                      {character.name}
-                    </h2>
-                    <p className="text-sm text-text-secondary mb-4 leading-relaxed">
-                      {character.personality}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {character.traits.map((trait) => (
-                        <Badge key={trait} variant="outline" size="sm">
-                          {trait}
-                        </Badge>
-                      ))}
+
+                    {/* Character Info at bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs text-white/70">
+                          {character.role}
+                        </span>
+                      </div>
+                      <h2 className="font-display text-xl font-bold text-white mb-2">
+                        {character.name}
+                      </h2>
+                      <div className="flex flex-wrap gap-1.5">
+                        {character.traits.map((trait) => (
+                          <Badge key={trait} variant="outline" size="sm" className="backdrop-blur-sm bg-background/30 border-white/20 text-white text-xs">
+                            {trait}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
+              </div>
             </div>
-
           </motion.div>
 
           {/* Right: Copy + CTA */}
