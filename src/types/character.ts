@@ -347,7 +347,7 @@ export interface SceneTemplate {
 // ============================================================================
 
 export interface EconomicProfile {
-  wallet_address?: string;
+  wallet_address?: string | null;
   total_earnings: number;
   tip_total: number;
   auction_history: AuctionRecord[];
@@ -375,8 +375,8 @@ export interface AuctionRecord {
 export interface CharacterStatus {
   current: 'streaming' | 'thinking' | 'creating' | 'sleeping' | 'chatting' | 'offline';
   last_active: string;
-  current_activity?: string;
-  stream_url?: string;
+  current_activity?: string | null;
+  stream_url?: string | null;
 
   stats: {
     followers: number;

@@ -91,7 +91,7 @@ export function Hero({ videoSrc }: HeroProps) {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
-            className="order-2 lg:order-1 flex justify-center lg:justify-start"
+            className="order-2 lg:order-1 flex justify-center lg:justify-end mr-16"
           >
             {/* Stacked Cards Container */}
             <div className="relative w-[320px] h-[420px] sm:w-[360px] sm:h-[470px]">
@@ -146,7 +146,11 @@ export function Hero({ videoSrc }: HeroProps) {
 
                     {/* Status badge */}
                     <div className="absolute top-3 left-3">
-                      <Badge variant={status.color} size="sm" className="backdrop-blur-sm bg-background/50">
+                      <Badge
+                        variant={status.color}
+                        size="sm"
+                        className="backdrop-blur-sm bg-background/50"
+                      >
                         {status.pulse && (
                           <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75" />
@@ -177,7 +181,12 @@ export function Hero({ videoSrc }: HeroProps) {
                       </h2>
                       <div className="flex flex-wrap gap-1.5">
                         {character.traits.map((trait) => (
-                          <Badge key={trait} variant="outline" size="sm" className="backdrop-blur-sm bg-background/30 border-white/20 text-white text-xs">
+                          <Badge
+                            key={trait}
+                            variant="outline"
+                            size="sm"
+                            className="backdrop-blur-sm bg-background/30 border-white/20 text-white text-xs"
+                          >
                             {trait}
                           </Badge>
                         ))}
