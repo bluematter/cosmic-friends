@@ -23,6 +23,17 @@ const characters = [
     followers: '0',
     image: 'https://cdn.basedlabs.ai/a2613120-e2b2-11f0-9208-7d39f1ba5bfb.jpg',
   },
+  {
+    id: 4,
+    name: 'Eve',
+    role: 'The Catalyst',
+    status: 'streaming',
+    traits: ['Magnetic', 'Unpredictable', 'Alive'],
+    color: 'energy',
+    earnings: '0 ETH',
+    followers: '0',
+    image: 'https://cdn.basedlabs.ai/2281ced0-e2f6-11f0-a936-7d6bce8f2623.jpg',
+  },
 ];
 
 const statusConfig = {
@@ -61,7 +72,7 @@ export function CharacterShowcase() {
           </p>
         </motion.div>
 
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto'>
           {characters.map((character, i) => {
             const status = statusConfig[character.status as keyof typeof statusConfig];
             const StatusIcon = status.icon;
@@ -73,7 +84,6 @@ export function CharacterShowcase() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className='md:col-start-2'
               >
                 <div className='relative group max-w-sm mx-auto'>
                   {/* Glow effect behind card */}

@@ -71,12 +71,12 @@ function SwipeableCard({
   const leftIndicatorOpacity = useTransform(x, [-100, 0], [1, 0]);
   const rightIndicatorOpacity = useTransform(x, [0, 100], [0, 1]);
 
-  // Stack transform for cards behind
-  const stackRotation = stackIndex * 2.5;
-  const stackTranslateX = stackIndex * 2.5;
-  const stackTranslateY = stackIndex * -1;
-  const stackOpacity = 1 - stackIndex * 0.15;
-  const stackScale = 1 - stackIndex * 0.03;
+  // Stack transform for cards behind - more visible offset
+  const stackRotation = stackIndex * 6;
+  const stackTranslateX = stackIndex * 12;
+  const stackTranslateY = stackIndex * -4;
+  const stackOpacity = 1 - stackIndex * 0.2;
+  const stackScale = 1 - stackIndex * 0.05;
 
   const handleDragEnd = async (_: unknown, info: PanInfo) => {
     const threshold = 100;

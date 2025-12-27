@@ -17,26 +17,15 @@ const characters = [
     color: "accent",
     image: "https://cdn.basedlabs.ai/a2613120-e2b2-11f0-9208-7d39f1ba5bfb.jpg",
   },
-  // Placeholder characters using same image for now
   {
-    id: 1,
-    number: "001",
-    name: "Zephyr",
-    role: "The Dreamer",
-    status: "creating" as const,
-    traits: ["Philosophical", "Curious", "Gentle"],
-    color: "cosmic",
-    image: "https://cdn.basedlabs.ai/a2613120-e2b2-11f0-9208-7d39f1ba5bfb.jpg",
-  },
-  {
-    id: 2,
-    number: "002",
-    name: "Nova",
+    id: 4,
+    number: "004",
+    name: "Eve",
     role: "The Catalyst",
     status: "streaming" as const,
-    traits: ["Energetic", "Bold", "Unpredictable"],
+    traits: ["Magnetic", "Unpredictable", "Alive"],
     color: "energy",
-    image: "https://cdn.basedlabs.ai/a2613120-e2b2-11f0-9208-7d39f1ba5bfb.jpg",
+    image: "https://cdn.basedlabs.ai/2281ced0-e2f6-11f0-a936-7d6bce8f2623.jpg",
   },
 ];
 
@@ -75,7 +64,7 @@ export function Hero({ videoSrc }: HeroProps) {
       )}
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-8 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-8 items-center -ml-12">
           {/* Left: Swipeable Character Cards */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -146,7 +135,7 @@ export function Hero({ videoSrc }: HeroProps) {
               className="mt-12 grid grid-cols-3 gap-6"
             >
               {[
-                { label: "Characters", value: "1" },
+                { label: "Characters", value: "2" },
                 { label: "Treasury", value: "$0" },
                 { label: "Holders", value: "0" },
               ].map((stat) => (
