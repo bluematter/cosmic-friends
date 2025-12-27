@@ -1,60 +1,50 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { motion } from "framer-motion";
-import {
-  ArrowRightIcon,
-  VideoCameraIcon,
-  SparklesIcon,
-} from "@heroicons/react/24/outline";
-import { Button, Badge, Card } from "@/components/ui";
+import { ArrowRightIcon } from "@heroicons/react/24/outline";
+import { Button, Badge, SwipeableCardDeck } from "@/components/ui";
 
-// Featured character - Adam
-const featuredCharacter = {
-  id: 3,
-  number: "003",
-  name: "Adam",
-  role: "The Wanderer",
-  status: "thinking",
-  personality:
-    "Space cowboy with grocery store energy. Hunts bounties, collects stories, makes instant ramen at 3am.",
-  traits: ["Mysterious", "Laid-back", "Resourceful"],
-  color: "accent",
-  image: "https://cdn.basedlabs.ai/a2613120-e2b2-11f0-9208-7d39f1ba5bfb.jpg",
-};
+// Characters for the swipeable deck
+const characters = [
+  {
+    id: 3,
+    number: "003",
+    name: "Adam",
+    role: "The Wanderer",
+    status: "thinking" as const,
+    traits: ["Mysterious", "Laid-back", "Resourceful"],
+    color: "accent",
+    image: "https://cdn.basedlabs.ai/a2613120-e2b2-11f0-9208-7d39f1ba5bfb.jpg",
+  },
+  // Placeholder characters using same image for now
+  {
+    id: 1,
+    number: "001",
+    name: "Zephyr",
+    role: "The Dreamer",
+    status: "creating" as const,
+    traits: ["Philosophical", "Curious", "Gentle"],
+    color: "cosmic",
+    image: "https://cdn.basedlabs.ai/a2613120-e2b2-11f0-9208-7d39f1ba5bfb.jpg",
+  },
+  {
+    id: 2,
+    number: "002",
+    name: "Nova",
+    role: "The Catalyst",
+    status: "streaming" as const,
+    traits: ["Energetic", "Bold", "Unpredictable"],
+    color: "energy",
+    image: "https://cdn.basedlabs.ai/a2613120-e2b2-11f0-9208-7d39f1ba5bfb.jpg",
+  },
+];
 
 interface HeroProps {
   videoSrc?: string;
 }
 
 export function Hero({ videoSrc }: HeroProps) {
-  const character = featuredCharacter;
-
-  const statusConfig = {
-    streaming: {
-      label: "LIVE NOW",
-      color: "error" as const,
-      icon: VideoCameraIcon,
-      pulse: true,
-    },
-    creating: {
-      label: "Creating",
-      color: "accent" as const,
-      icon: SparklesIcon,
-      pulse: false,
-    },
-    thinking: {
-      label: "Thinking",
-      color: "cosmic" as const,
-      icon: SparklesIcon,
-      pulse: false,
-    },
-  };
-
-  const status = statusConfig[character.status as keyof typeof statusConfig];
-  const StatusIcon = status.icon;
-
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden pt-16">
       {/* Video Background */}
@@ -70,8 +60,8 @@ export function Hero({ videoSrc }: HeroProps) {
             <source src={videoSrc} type="video/mp4" />
           </video>
           {/* Light gradient for text readability at bottom */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/10 to-background" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/10 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/25 via-background/50 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/25 via-background/90 to-background" />
         </>
       )}
 
@@ -86,116 +76,14 @@ export function Hero({ videoSrc }: HeroProps) {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-8 items-center">
-          {/* Left: Featured Character */}
+          {/* Left: Swipeable Character Cards */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
-            className="order-2 lg:order-1 flex justify-center lg:justify-end mr-16"
+            className="order-2 lg:order-1 flex justify-center lg:justify-end lg:mr-16"
           >
-            {/* Stacked Cards Container */}
-            <div className="relative w-[320px] h-[420px] sm:w-[360px] sm:h-[470px]">
-              {/* Glow effect behind stack */}
-              <div className="absolute inset-0 bg-gradient-to-r from-accent-500/30 via-cosmic-500/30 to-energy-500/30 rounded-2xl blur-3xl opacity-70" />
-
-              {/* Back card (3rd) */}
-              <div className="absolute top-0 left-0 w-full h-full transform translate-x-5 -translate-y-2 rotate-[5deg]">
-                <div className="w-full h-full rounded-2xl border border-white/10 overflow-hidden bg-background-secondary/80 backdrop-blur-sm shadow-xl">
-                  <Image
-                    src={character.image || ""}
-                    alt="Character"
-                    width={360}
-                    height={470}
-                    className="object-cover object-top w-full h-full opacity-50"
-                  />
-                </div>
-              </div>
-
-              {/* Middle card (2nd) */}
-              <div className="absolute top-0 left-0 w-full h-full transform translate-x-2.5 -translate-y-1 rotate-[2.5deg]">
-                <div className="w-full h-full rounded-2xl border border-white/10 overflow-hidden bg-background-secondary/80 backdrop-blur-sm shadow-xl">
-                  <Image
-                    src={character.image || ""}
-                    alt="Character"
-                    width={360}
-                    height={470}
-                    className="object-cover object-top w-full h-full opacity-70"
-                  />
-                </div>
-              </div>
-
-              {/* Front card (main) */}
-              <div className="absolute top-0 left-0 w-full h-full group">
-                <Card
-                  variant="glass"
-                  padding="none"
-                  className="w-full h-full overflow-hidden rounded-2xl border border-white/20 shadow-2xl"
-                >
-                  <div className="relative w-full h-full">
-                    <Image
-                      src={character.image || ""}
-                      alt={character.name}
-                      width={360}
-                      height={470}
-                      className="object-cover object-top w-full h-full"
-                      priority
-                    />
-
-                    {/* Gradient overlay for text */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
-
-                    {/* Status badge */}
-                    <div className="absolute top-3 left-3">
-                      <Badge
-                        variant={status.color}
-                        size="sm"
-                        className="backdrop-blur-sm bg-background/50"
-                      >
-                        {status.pulse && (
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75" />
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-current" />
-                          </span>
-                        )}
-                        <StatusIcon className="h-3 w-3" />
-                        {status.label}
-                      </Badge>
-                    </div>
-
-                    {/* Character number */}
-                    <div className="absolute top-3 right-3">
-                      <span className="font-mono text-xs text-white/70 backdrop-blur-sm bg-background/30 px-2 py-1 rounded">
-                        #{character.number}
-                      </span>
-                    </div>
-
-                    {/* Character Info at bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs text-white/70">
-                          {character.role}
-                        </span>
-                      </div>
-                      <h2 className="font-display text-xl font-bold text-white mb-2">
-                        {character.name}
-                      </h2>
-                      <div className="flex flex-wrap gap-1.5">
-                        {character.traits.map((trait) => (
-                          <Badge
-                            key={trait}
-                            variant="outline"
-                            size="sm"
-                            className="backdrop-blur-sm bg-background/30 border-white/20 text-white text-xs"
-                          >
-                            {trait}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-            </div>
+            <SwipeableCardDeck characters={characters} />
           </motion.div>
 
           {/* Right: Copy + CTA */}

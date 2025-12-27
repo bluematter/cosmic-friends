@@ -6,13 +6,14 @@ import {
   Flywheel,
   CTA,
   Footer,
-} from '@/components/landing';
+} from "@/components/landing";
 
-const COSMIC_BG_VIDEO = 'https://cdn.basedlabs.ai/40f1ca20-e2ae-11f0-b0c3-51b2a8e655dc.mp4.mp4';
+const COSMIC_BG_VIDEO =
+  "https://v3b.fal.media/files/b/0a87f3b3/nTGaca8TU1DT6LHgPvaGs_video.mp4"; //'https://cdn.basedlabs.ai/40f1ca20-e2ae-11f0-b0c3-51b2a8e655dc.mp4.mp4';
 
 export default function Home() {
   return (
-    <main className='min-h-screen'>
+    <main className="min-h-screen">
       <Header />
       <Hero videoSrc={COSMIC_BG_VIDEO} />
       <About />
