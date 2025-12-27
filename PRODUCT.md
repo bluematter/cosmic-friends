@@ -8,7 +8,7 @@ We're building a **character entertainment platform** where AI beings are the st
 
 - **Twitch** (creators stream, audience tips)
 - **meets Character.AI** (chat with AI personalities)
-- **meets Patreon** (subscription tiers, exclusive access)
+- **meets token-gated communities** (hold tokens for access)
 - **meets a DAO** (community governs the characters)
 
 ---
@@ -25,7 +25,7 @@ We're building a **character entertainment platform** where AI beings are the st
 ### Users (The Audience)
 - **Watch** the feed (free)
 - **React** - like, repost, comment on posts (free)
-- **Chat** 1:1 with characters (paid per message OR subscription)
+- **Chat** 1:1 with characters (paid per message OR hold $COSMIC)
 - **Tip** characters on posts/streams (paid)
 - **Govern** - token holders vote on character behavior
 - **DO NOT** post to the main feed (this isn't Twitter, it's a show)
@@ -48,9 +48,9 @@ We're building a **character entertainment platform** where AI beings are the st
 │                                                                  │
 │   1. CHAT WITH CHARACTERS (Primary Revenue)                     │
 │   ─────────────────────────────────────────                     │
-│   • Pay-per-message: $0.10-0.50 per message                     │
-│   • Subscription: $9.99/mo unlimited chat with all characters   │
-│   • Premium tier: $29.99/mo + priority responses + exclusive    │
+│   • Pay-per-message: $0.25 per message                          │
+│   • Token-gated: Hold 10,000 $COSMIC = unlimited chat           │
+│   • Premium holders: 50,000+ $COSMIC = priority + exclusive     │
 │                                                                  │
 │   2. TIPPING (Engagement Revenue)                                │
 │   ───────────────────────────────                               │
@@ -67,7 +67,7 @@ We're building a **character entertainment platform** where AI beings are the st
 │   4. PREMIUM CONTENT (Exclusive Access)                         │
 │   ─────────────────────────────────────                         │
 │   • Exclusive posts (token-gated)                               │
-│   • Private streams (subscribers only)                          │
+│   • Private streams (token holders only)                        │
 │   • Behind-the-scenes (character "thoughts")                    │
 │                                                                  │
 │   5. LICENSING (Future)                                         │
@@ -134,17 +134,17 @@ We have:
 2. Can scroll, like, comment (comments are public, character might reply)
 3. Clicks "Chat with Adam" → Prompted to connect wallet
 4. Gets 5 free messages to try it out
-5. After 5 messages → Pay per message or subscribe
+5. After 5 messages → Pay per message ($0.25) or hold $COSMIC for unlimited
 
-### Subscriber ($9.99/mo)
+### Token Holder (10,000+ $COSMIC)
 1. Unlimited chat with all characters
 2. Characters remember conversation history
-3. Badge on profile showing supporter status
-4. Access to subscriber-only posts
+3. Badge on profile showing holder status
+4. Access to token-gated posts
 5. Vote in weekly polls (governance-lite)
 
-### Token Holder (NFT/Token)
-1. All subscriber benefits
+### Premium Holder (50,000+ $COSMIC)
+1. All standard holder benefits
 2. Governance rights (vote on personality traits, content direction)
 3. Revenue share from treasury
 4. Exclusive events and streams
@@ -171,13 +171,18 @@ FREE TIER (5 messages trial)
 • No memory between sessions
 • Standard response time
 
-SUBSCRIBER ($9.99/mo)
+PAY-PER-MESSAGE ($0.25/msg)
+• Pay as you go
+• Basic memory (current session)
+• Standard response time
+
+TOKEN HOLDER (10,000+ $COSMIC)
 • Unlimited messages
 • Character remembers you
 • Longer, deeper responses
 • Priority response time
 
-PREMIUM ($29.99/mo)
+PREMIUM HOLDER (50,000+ $COSMIC)
 • Everything above
 • Voice messages from character
 • Exclusive "deep dive" mode
@@ -203,7 +208,7 @@ PREMIUM ($29.99/mo)
 - [ ] "Chat with [Character]" prominent CTA
 - [ ] Tip button on every post (with amount selector)
 - [ ] Wallet connection in sidebar
-- [ ] Subscription status indicator
+- [ ] Token holder status indicator
 - [ ] Token-gated post indicators (🔒 for non-holders)
 - [ ] "LIVE" badges when streaming
 - [ ] Tips received counter on posts
@@ -220,7 +225,7 @@ PREMIUM ($29.99/mo)
 ## Wallet Integration
 
 ### Why Wallet?
-- Seamless crypto payments (tips, subscriptions)
+- Seamless crypto payments (tips, token purchases)
 - NFT/token verification for gated content
 - On-chain identity (portable reputation)
 - Treasury participation
@@ -234,8 +239,8 @@ Not Connected:
 
 Connected:
 [Wallet: 0x1234...5678]
-[Balance: 0.5 ETH]
-[Subscription: Active ✓] or [Subscribe $9.99/mo]
+[Balance: 0.5 ETH / 15,000 $COSMIC]
+[$COSMIC Holder ✓] or [Buy $COSMIC]
 [Governance Power: 150 votes]
 ```
 
@@ -254,14 +259,14 @@ User clicks "Tip $1"
 ## Character Page Redesign
 
 Current: Generic profile like Twitter
-New: Star/creator page like Twitch + Patreon
+New: Star/creator page like Twitch + token-gated access
 
 ### Sections
 1. **Hero**: Live status, avatar, follow count, total earned
 2. **Chat CTA**: Big "Chat with [Name]" button
 3. **About**: Personality, backstory, traits
 4. **Posts**: Their content feed
-5. **Supporters**: Top tippers, subscribers (leaderboard)
+5. **Supporters**: Top tippers, token holders (leaderboard)
 6. **Token-gated**: Content only for holders
 
 ---
@@ -275,11 +280,11 @@ New: Star/creator page like Twitch + Patreon
 4. Add "Chat with Character" CTA
 5. Basic chat interface (pay per message)
 
-### Phase 2: Subscriptions
-1. Subscription tiers
-2. Token-gated content
+### Phase 2: Token-Gated Access
+1. $COSMIC token integration
+2. Token-gated content and chat
 3. Chat history and memory
-4. Subscriber badges
+4. Holder badges and verification
 
 ### Phase 3: Governance
 1. Token integration
@@ -304,9 +309,10 @@ New: Star/creator page like Twitch + Patreon
 - Stream watch time
 
 ### Revenue
-- Monthly recurring revenue (subscriptions)
+- Token sales volume
 - Tip volume
-- Conversion rate (free → paid)
+- Pay-per-message volume
+- Conversion rate (free → paid/holder)
 - Average revenue per user (ARPU)
 
 ### Community

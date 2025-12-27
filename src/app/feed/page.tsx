@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -340,6 +340,25 @@ export default function FeedPage() {
   const [walletConnected, setWalletConnected] = useState(false);
   const [tipModalOpen, setTipModalOpen] = useState(false);
   const [tipCharacter, setTipCharacter] = useState('');
+  const [sidebarTop, setSidebarTop] = useState(0);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // X-style sticky sidebar: scrolls with page until bottom, then sticks
+  useEffect(() => {
+    const calculateSidebarTop = () => {
+      if (sidebarRef.current) {
+        const sidebarHeight = sidebarRef.current.offsetHeight;
+        const viewportHeight = window.innerHeight;
+        // If sidebar is taller than viewport, set negative top so it sticks at bottom
+        const offset = Math.max(0, sidebarHeight - viewportHeight);
+        setSidebarTop(-offset);
+      }
+    };
+
+    calculateSidebarTop();
+    window.addEventListener('resize', calculateSidebarTop);
+    return () => window.removeEventListener('resize', calculateSidebarTop);
+  }, []);
 
   const handleTip = (characterName: string) => {
     if (!walletConnected) {
@@ -462,10 +481,14 @@ export default function FeedPage() {
           </div>
         </main>
 
-        {/* Right Sidebar */}
-        <aside className="sticky top-0 h-screen w-[350px] flex-shrink-0 px-6 py-2 hidden lg:block">
+        {/* Right Sidebar - X-style: scrolls with page, then sticks at bottom */}
+        <aside
+          ref={sidebarRef}
+          className="sticky w-[350px] flex-shrink-0 px-6 py-2 hidden lg:block self-start"
+          style={{ top: sidebarTop }}
+        >
           {/* Search */}
-          <div className="sticky top-2">
+          <div className="pb-4">
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
               <input
@@ -518,7 +541,7 @@ export default function FeedPage() {
               ))}
               <div className="px-4 py-3 bg-background/50">
                 <p className="text-xs text-text-tertiary text-center">
-                  5 free messages · Then $0.10/msg or subscribe for unlimited
+                  5 free messages · Then $0.25/msg or hold $COSMIC for unlimited
                 </p>
               </div>
             </div>
@@ -541,18 +564,23 @@ export default function FeedPage() {
               </button>
             </div>
 
-            {/* Subscription CTA */}
-            <div className="mt-4 bg-background-secondary rounded-2xl p-4">
+            {/* Token-Gated Access CTA */}
+            <div className="mt-4 bg-gradient-to-br from-accent-500/10 to-cosmic-500/10 rounded-2xl p-4 border border-accent-500/20">
               <div className="flex items-center gap-2 mb-2">
                 <BoltIcon className="w-5 h-5 text-accent-400" />
-                <span className="font-bold text-white">Go Unlimited</span>
+                <span className="font-bold text-white">Hold $COSMIC</span>
               </div>
               <p className="text-sm text-text-tertiary mb-3">
-                Unlimited chats, exclusive content, and governance rights.
+                Unlimited chats, exclusive content, governance rights, and revenue share.
               </p>
-              <button className="w-full bg-accent-500 hover:bg-accent-600 text-white font-bold py-2 rounded-full transition-colors text-sm">
-                Subscribe $9.99/mo
-              </button>
+              <div className="space-y-2">
+                <button className="w-full bg-accent-500 hover:bg-accent-600 text-white font-bold py-2 rounded-full transition-colors text-sm">
+                  Buy $COSMIC
+                </button>
+                <p className="text-xs text-text-tertiary text-center">
+                  Hold 10,000 $COSMIC = Unlimited Access
+                </p>
+              </div>
             </div>
 
             {/* Footer links */}

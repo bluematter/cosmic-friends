@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -257,6 +257,24 @@ export default function ProfilePage() {
   const posts = postsByHandle[handle] || [];
   const [walletConnected, setWalletConnected] = useState(false);
   const [tipModalOpen, setTipModalOpen] = useState(false);
+  const [sidebarTop, setSidebarTop] = useState(0);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // X-style sticky sidebar: scrolls with page until bottom, then sticks
+  useEffect(() => {
+    const calculateSidebarTop = () => {
+      if (sidebarRef.current) {
+        const sidebarHeight = sidebarRef.current.offsetHeight;
+        const viewportHeight = window.innerHeight;
+        const offset = Math.max(0, sidebarHeight - viewportHeight);
+        setSidebarTop(-offset);
+      }
+    };
+
+    calculateSidebarTop();
+    window.addEventListener('resize', calculateSidebarTop);
+    return () => window.removeEventListener('resize', calculateSidebarTop);
+  }, []);
 
   // Other characters (for sidebar)
   const otherChars = otherCharacters.filter(c => c.handle !== handle);
@@ -447,9 +465,13 @@ export default function ProfilePage() {
           </div>
         </main>
 
-        {/* Right Sidebar */}
-        <aside className="sticky top-0 h-screen w-[350px] flex-shrink-0 px-6 py-2 hidden lg:block">
-          <div className="sticky top-2">
+        {/* Right Sidebar - X-style: scrolls with page, then sticks at bottom */}
+        <aside
+          ref={sidebarRef}
+          className="sticky w-[350px] flex-shrink-0 px-6 py-2 hidden lg:block self-start"
+          style={{ top: sidebarTop }}
+        >
+          <div className="pb-4">
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
               <input type="text" placeholder="Search" className="w-full bg-background-secondary rounded-full py-3 pl-12 pr-4 text-white placeholder-text-tertiary outline-none focus:ring-1 focus:ring-cosmic-500" />
@@ -498,7 +520,7 @@ export default function ProfilePage() {
                 <SparklesIcon className="w-4 h-4" />
                 Start Chatting
               </button>
-              <p className="text-xs text-text-tertiary text-center mt-2">5 free messages · Then $0.10/msg</p>
+              <p className="text-xs text-text-tertiary text-center mt-2">5 free messages · Then $0.25/msg or hold $COSMIC</p>
             </div>
 
             {/* Other Characters */}
@@ -532,18 +554,23 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Subscription CTA */}
-            <div className="mt-4 bg-background-secondary rounded-2xl p-4">
+            {/* Token-Gated Access CTA */}
+            <div className="mt-4 bg-gradient-to-br from-accent-500/10 to-cosmic-500/10 rounded-2xl p-4 border border-accent-500/20">
               <div className="flex items-center gap-2 mb-2">
                 <BoltIcon className="w-5 h-5 text-accent-400" />
-                <span className="font-bold text-white">Go Unlimited</span>
+                <span className="font-bold text-white">Hold $COSMIC</span>
               </div>
               <p className="text-sm text-text-tertiary mb-3">
-                Unlimited chats with all characters, exclusive content, and governance rights.
+                Unlimited chats, exclusive content, governance rights, and revenue share.
               </p>
-              <button className="w-full bg-accent-500 hover:bg-accent-600 text-white font-bold py-2 rounded-full transition-colors text-sm">
-                Subscribe $9.99/mo
-              </button>
+              <div className="space-y-2">
+                <button className="w-full bg-accent-500 hover:bg-accent-600 text-white font-bold py-2 rounded-full transition-colors text-sm">
+                  Buy $COSMIC
+                </button>
+                <p className="text-xs text-text-tertiary text-center">
+                  Hold 10,000 $COSMIC = Unlimited Access
+                </p>
+              </div>
             </div>
 
             <div className="mt-4 px-4 text-xs text-text-tertiary">

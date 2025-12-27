@@ -12,6 +12,11 @@ import {
   CalculatorIcon,
   SparklesIcon,
   AdjustmentsHorizontalIcon,
+  BoltIcon,
+  CpuChipIcon,
+  ArrowTrendingUpIcon,
+  CheckCircleIcon,
+  QuestionMarkCircleIcon,
 } from '@heroicons/react/24/outline';
 
 // Default values - easily tweakable
@@ -25,7 +30,7 @@ const DEFAULT_VALUES = {
 
   // Token Details
   totalSupply: 1_000_000_000,
-  initialTokenPrice: 0.001,
+  tokenHolderThreshold: 10000, // tokens needed for unlimited access
 
   // Vesting
   founderVestingYears: 3,
@@ -49,11 +54,21 @@ const DEFAULT_VALUES = {
   characterMintPriceETH: 0.1,
   ethPrice: 3500,
 
-  // Projections
+  // User Funnel (percentages)
   monthlyActiveUsers: 10000,
-  chatsPerUserPerMonth: 20,
+  pctFreeOnly: 40, // Just browse, use 5 free messages
+  pctPayPerMessage: 35, // Pay $0.25/msg
+  pctTokenHolders: 25, // Hold $COSMIC, unlimited access
+
+  // Engagement
+  chatsPerPayingUser: 30, // Pay-per-message users
+  chatsPerHolder: 100, // Token holders chat more (it's free for them)
   tipsPerUserPerMonth: 2,
   characterMintsPerMonth: 10,
+
+  // Operating Costs
+  costPerMessage: 0.02, // LLM API cost
+  monthlyInfraCost: 500, // Servers, etc.
 
   // Founder needs
   founderMonthlyNeed: 20000,
@@ -162,7 +177,7 @@ function StatCard({
   label: string;
   value: string;
   subValue?: string;
-  color?: 'cosmic' | 'accent' | 'energy' | 'green' | 'red';
+  color?: 'cosmic' | 'accent' | 'energy' | 'green' | 'red' | 'blue';
 }) {
   const colorClasses = {
     cosmic: 'from-cosmic-500/20 to-cosmic-900/20 border-cosmic-500/30',
@@ -170,6 +185,7 @@ function StatCard({
     energy: 'from-energy-500/20 to-energy-900/20 border-energy-500/30',
     green: 'from-green-500/20 to-green-900/20 border-green-500/30',
     red: 'from-red-500/20 to-red-900/20 border-red-500/30',
+    blue: 'from-blue-500/20 to-blue-900/20 border-blue-500/30',
   };
   const iconColors = {
     cosmic: 'text-cosmic-400',
@@ -177,6 +193,7 @@ function StatCard({
     energy: 'text-energy-400',
     green: 'text-green-400',
     red: 'text-red-400',
+    blue: 'text-blue-400',
   };
 
   return (
@@ -221,6 +238,17 @@ function AllocationBar({
   );
 }
 
+function InfoTooltip({ text }: { text: string }) {
+  return (
+    <div className="group relative inline-block ml-1">
+      <QuestionMarkCircleIcon className="w-4 h-4 text-text-tertiary inline cursor-help" />
+      <div className="hidden group-hover:block absolute z-10 w-64 p-2 bg-background-secondary border border-white/20 rounded-lg text-xs text-text-secondary -left-28 top-6">
+        {text}
+      </div>
+    </div>
+  );
+}
+
 export default function TokenomicsPage() {
   const [values, setValues] = useState(DEFAULT_VALUES);
 
@@ -231,33 +259,52 @@ export default function TokenomicsPage() {
   // Calculated values
   const calculations = useMemo(() => {
     const {
-      founderAllocation, treasuryAllocation, totalSupply, initialTokenPrice, founderVestingYears,
+      founderAllocation, treasuryAllocation, totalSupply, founderVestingYears,
       chatCharacterSplit, chatTreasurySplit, chatProtocolSplit,
       tipCharacterSplit, tipTreasurySplit, tipProtocolSplit,
       mintTreasurySplit, mintFounderSplit,
       chatPriceUSD, avgTipUSD, characterMintPriceETH, ethPrice,
-      monthlyActiveUsers, chatsPerUserPerMonth, tipsPerUserPerMonth, characterMintsPerMonth,
+      monthlyActiveUsers, pctFreeOnly, pctPayPerMessage, pctTokenHolders,
+      chatsPerPayingUser, chatsPerHolder, tipsPerUserPerMonth, characterMintsPerMonth,
+      costPerMessage, monthlyInfraCost,
       founderMonthlyNeed,
     } = values;
+
+    // User segments
+    const freeUsers = Math.floor(monthlyActiveUsers * (pctFreeOnly / 100));
+    const payingUsers = Math.floor(monthlyActiveUsers * (pctPayPerMessage / 100));
+    const holderUsers = Math.floor(monthlyActiveUsers * (pctTokenHolders / 100));
 
     // Token values
     const founderTokens = totalSupply * (founderAllocation / 100);
     const treasuryTokens = totalSupply * (treasuryAllocation / 100);
     const founderTokensPerMonth = founderTokens / (founderVestingYears * 12);
-    const founderTokenValueAtLaunch = founderTokens * initialTokenPrice;
 
-    // Monthly volume calculations
-    const monthlyChats = monthlyActiveUsers * chatsPerUserPerMonth;
-    const monthlyChatRevenue = monthlyChats * chatPriceUSD;
+    // Message volumes
+    const freeMessages = freeUsers * 5; // 5 free trial messages
+    const paidMessages = payingUsers * chatsPerPayingUser;
+    const holderMessages = holderUsers * chatsPerHolder;
+    const totalMessages = freeMessages + paidMessages + holderMessages;
 
+    // Revenue from chat (only pay-per-message users generate chat revenue)
+    const monthlyChatRevenue = paidMessages * chatPriceUSD;
+
+    // Tips (all users can tip)
     const monthlyTips = monthlyActiveUsers * tipsPerUserPerMonth;
     const monthlyTipRevenue = monthlyTips * avgTipUSD;
 
+    // Mints
     const monthlyMintRevenue = characterMintsPerMonth * characterMintPriceETH * ethPrice;
 
     const totalMonthlyRevenue = monthlyChatRevenue + monthlyTipRevenue + monthlyMintRevenue;
 
-    // Revenue splits
+    // Operating costs
+    const llmCosts = totalMessages * costPerMessage;
+    const totalOperatingCosts = llmCosts + monthlyInfraCost;
+    const netRevenue = totalMonthlyRevenue - totalOperatingCosts;
+    const profitMargin = totalMonthlyRevenue > 0 ? (netRevenue / totalMonthlyRevenue) * 100 : 0;
+
+    // Revenue splits (from net revenue after costs)
     const founderFromChat = monthlyChatRevenue * (chatProtocolSplit / 100);
     const founderFromTips = monthlyTipRevenue * (tipProtocolSplit / 100);
     const founderFromMints = monthlyMintRevenue * (mintFounderSplit / 100);
@@ -272,36 +319,53 @@ export default function TokenomicsPage() {
     const characterFromTips = monthlyTipRevenue * (tipCharacterSplit / 100);
     const characterMonthlyRevenue = characterFromChat + characterFromTips;
 
-    // Users needed to hit founder goal
-    const revenuePerUser = (chatsPerUserPerMonth * chatPriceUSD * (chatProtocolSplit / 100)) +
+    // Users needed to hit founder goal (from paying users only)
+    const revenuePerPayingUser = (chatsPerPayingUser * chatPriceUSD * (chatProtocolSplit / 100)) +
                           (tipsPerUserPerMonth * avgTipUSD * (tipProtocolSplit / 100));
-    const usersNeededForGoal = Math.ceil(founderMonthlyNeed / revenuePerUser);
+    const payingUsersNeededForGoal = Math.ceil(founderMonthlyNeed / revenuePerPayingUser);
+    const totalUsersNeededForGoal = Math.ceil(payingUsersNeededForGoal / (pctPayPerMessage / 100));
 
     // Founder meets goal?
     const founderMeetsGoal = founderMonthlyRevenue >= founderMonthlyNeed;
     const founderGap = founderMonthlyNeed - founderMonthlyRevenue;
 
     return {
+      // User segments
+      freeUsers,
+      payingUsers,
+      holderUsers,
+      // Tokens
       founderTokens,
       treasuryTokens,
       founderTokensPerMonth,
-      founderTokenValueAtLaunch,
-      monthlyChats,
+      // Messages
+      freeMessages,
+      paidMessages,
+      holderMessages,
+      totalMessages,
+      // Revenue
       monthlyChatRevenue,
-      monthlyTips,
       monthlyTipRevenue,
       monthlyMintRevenue,
       totalMonthlyRevenue,
+      // Costs
+      llmCosts,
+      totalOperatingCosts,
+      netRevenue,
+      profitMargin,
+      // Splits
       founderMonthlyRevenue,
       treasuryMonthlyRevenue,
       characterMonthlyRevenue,
       founderFromChat,
       founderFromTips,
       founderFromMints,
-      usersNeededForGoal,
+      // Goals
+      payingUsersNeededForGoal,
+      totalUsersNeededForGoal,
       founderMeetsGoal,
       founderGap,
-      revenuePerUser,
+      revenuePerPayingUser,
     };
   }, [values]);
 
@@ -312,6 +376,8 @@ export default function TokenomicsPage() {
     { label: 'Liquidity', value: values.liquidityAllocation, color: 'bg-blue-500' },
     { label: 'Public Sale', value: values.publicSaleAllocation, color: 'bg-green-500' },
   ];
+
+  const userFunnelTotal = values.pctFreeOnly + values.pctPayPerMessage + values.pctTokenHolders;
 
   return (
     <div className="min-h-screen bg-background">
@@ -348,19 +414,56 @@ export default function TokenomicsPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* How It Works - Quick Summary */}
+        <section className="mb-8 bg-gradient-to-r from-cosmic-500/10 to-accent-500/10 rounded-2xl border border-cosmic-500/20 p-6">
+          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <BoltIcon className="w-5 h-5 text-cosmic-400" />
+            How Cosmic Friends Makes Money
+          </h2>
+          <div className="grid md:grid-cols-4 gap-4 text-sm">
+            <div className="bg-background/50 rounded-xl p-4">
+              <div className="text-2xl mb-2">1</div>
+              <div className="font-medium text-white mb-1">Users Chat with AI Characters</div>
+              <div className="text-text-tertiary">Pay $0.25/message OR hold $COSMIC tokens for unlimited</div>
+            </div>
+            <div className="bg-background/50 rounded-xl p-4">
+              <div className="text-2xl mb-2">2</div>
+              <div className="font-medium text-white mb-1">Users Tip Characters</div>
+              <div className="text-text-tertiary">Tips on posts and streams, any amount</div>
+            </div>
+            <div className="bg-background/50 rounded-xl p-4">
+              <div className="text-2xl mb-2">3</div>
+              <div className="font-medium text-white mb-1">Revenue Gets Split</div>
+              <div className="text-text-tertiary">Character wallet, Treasury, Protocol (founder)</div>
+            </div>
+            <div className="bg-background/50 rounded-xl p-4">
+              <div className="text-2xl mb-2">4</div>
+              <div className="font-medium text-white mb-1">Token Demand</div>
+              <div className="text-text-tertiary">Users buy $COSMIC for unlimited access + governance</div>
+            </div>
+          </div>
+        </section>
+
         {/* Key Metrics */}
         <section className="mb-8">
           <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
             <SparklesIcon className="w-5 h-5 text-cosmic-400" />
             Key Projections
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <StatCard
               icon={CurrencyDollarIcon}
-              label="Monthly Revenue"
+              label="Gross Revenue"
               value={formatUSD(calculations.totalMonthlyRevenue)}
               subValue={`${formatNumber(values.monthlyActiveUsers)} users`}
               color="cosmic"
+            />
+            <StatCard
+              icon={CpuChipIcon}
+              label="Operating Costs"
+              value={formatUSD(calculations.totalOperatingCosts)}
+              subValue={`${calculations.profitMargin.toFixed(0)}% margin`}
+              color="red"
             />
             <StatCard
               icon={WalletIcon}
@@ -379,10 +482,131 @@ export default function TokenomicsPage() {
             <StatCard
               icon={UserGroupIcon}
               label="Users Needed"
-              value={formatNumber(calculations.usersNeededForGoal)}
+              value={formatNumber(calculations.totalUsersNeededForGoal)}
               subValue={`To hit ${formatUSD(values.founderMonthlyNeed)}/mo`}
               color="energy"
             />
+          </div>
+        </section>
+
+        {/* User Funnel - CRITICAL FOR UNDERSTANDING */}
+        <section className="mb-8">
+          <div className="bg-background-secondary rounded-2xl p-6 border border-white/10">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <UserGroupIcon className="w-5 h-5 text-energy-400" />
+              User Funnel
+              <InfoTooltip text="Not all users pay per message. Token holders get unlimited chat, so they don't generate per-message revenue. This breakdown shows where revenue actually comes from." />
+            </h3>
+
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-background rounded-xl p-4 border border-white/5">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-sm text-text-secondary">Free Users</span>
+                  <span className="text-lg font-bold text-white">{values.pctFreeOnly}%</span>
+                </div>
+                <div className="text-2xl font-bold text-text-tertiary mb-1">{formatNumber(calculations.freeUsers)}</div>
+                <div className="text-xs text-text-tertiary">5 free messages, then prompted to pay/buy tokens</div>
+                <div className="mt-2 text-xs text-red-400">Revenue: $0 (trial users)</div>
+              </div>
+
+              <div className="bg-background rounded-xl p-4 border border-green-500/30">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-sm text-text-secondary">Pay-Per-Message</span>
+                  <span className="text-lg font-bold text-green-400">{values.pctPayPerMessage}%</span>
+                </div>
+                <div className="text-2xl font-bold text-white mb-1">{formatNumber(calculations.payingUsers)}</div>
+                <div className="text-xs text-text-tertiary">{values.chatsPerPayingUser} messages/mo × ${values.chatPriceUSD}</div>
+                <div className="mt-2 text-xs text-green-400">Revenue: {formatUSD(calculations.monthlyChatRevenue)}</div>
+              </div>
+
+              <div className="bg-background rounded-xl p-4 border border-cosmic-500/30">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-sm text-text-secondary">$COSMIC Holders</span>
+                  <span className="text-lg font-bold text-cosmic-400">{values.pctTokenHolders}%</span>
+                </div>
+                <div className="text-2xl font-bold text-white mb-1">{formatNumber(calculations.holderUsers)}</div>
+                <div className="text-xs text-text-tertiary">{values.chatsPerHolder} messages/mo (unlimited)</div>
+                <div className="mt-2 text-xs text-cosmic-400">Chat: $0 (but bought tokens!)</div>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <Slider
+                label="Free Users"
+                value={values.pctFreeOnly}
+                onChange={(v) => updateValue('pctFreeOnly', v)}
+                suffix="%"
+              />
+              <Slider
+                label="Pay-Per-Message"
+                value={values.pctPayPerMessage}
+                onChange={(v) => updateValue('pctPayPerMessage', v)}
+                suffix="%"
+              />
+              <Slider
+                label="Token Holders"
+                value={values.pctTokenHolders}
+                onChange={(v) => updateValue('pctTokenHolders', v)}
+                suffix="%"
+              />
+            </div>
+            <div className={`text-sm mt-2 ${userFunnelTotal === 100 ? 'text-green-400' : 'text-red-400'}`}>
+              Total: {userFunnelTotal}% {userFunnelTotal !== 100 && '(must equal 100%)'}
+            </div>
+          </div>
+        </section>
+
+        {/* Token Utility - Why $COSMIC Has Value */}
+        <section className="mb-8">
+          <div className="bg-gradient-to-r from-cosmic-500/10 to-purple-500/10 rounded-2xl p-6 border border-cosmic-500/20">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <ArrowTrendingUpIcon className="w-5 h-5 text-cosmic-400" />
+              Why $COSMIC Has Value
+            </h3>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-background/50 rounded-xl p-4">
+                <CheckCircleIcon className="w-6 h-6 text-green-400 mb-2" />
+                <div className="font-medium text-white mb-1">Access Utility</div>
+                <div className="text-sm text-text-tertiary">
+                  Hold {formatNumber(values.tokenHolderThreshold)}+ tokens = unlimited chat with all characters. Saves money vs pay-per-message.
+                </div>
+              </div>
+
+              <div className="bg-background/50 rounded-xl p-4">
+                <CheckCircleIcon className="w-6 h-6 text-green-400 mb-2" />
+                <div className="font-medium text-white mb-1">Governance</div>
+                <div className="text-sm text-text-tertiary">
+                  Vote on character personalities, content direction, treasury spending. Your voice matters.
+                </div>
+              </div>
+
+              <div className="bg-background/50 rounded-xl p-4">
+                <CheckCircleIcon className="w-6 h-6 text-green-400 mb-2" />
+                <div className="font-medium text-white mb-1">Treasury Backing</div>
+                <div className="text-sm text-text-tertiary">
+                  35% of tokens back the treasury. Revenue flows in, creating real asset backing.
+                </div>
+              </div>
+
+              <div className="bg-background/50 rounded-xl p-4">
+                <CheckCircleIcon className="w-6 h-6 text-green-400 mb-2" />
+                <div className="font-medium text-white mb-1">Buy Pressure</div>
+                <div className="text-sm text-text-tertiary">
+                  New users buy tokens for access. Growing user base = growing demand for $COSMIC.
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 p-4 bg-background/50 rounded-xl">
+              <div className="text-sm text-text-secondary mb-2">Token Holder Math:</div>
+              <div className="text-sm text-white">
+                If a user sends {values.chatsPerHolder} messages/month at ${values.chatPriceUSD}/msg = <span className="text-green-400">${(values.chatsPerHolder * values.chatPriceUSD).toFixed(0)}/month</span>
+              </div>
+              <div className="text-sm text-text-tertiary mt-1">
+                Holding {formatNumber(values.tokenHolderThreshold)} $COSMIC for unlimited access is a better deal if they chat regularly.
+              </div>
+            </div>
           </div>
         </section>
 
@@ -429,6 +653,48 @@ export default function TokenomicsPage() {
               }`}>
                 Total: {tokenAllocations.reduce((a, b) => a + b.value, 0)}%
                 {tokenAllocations.reduce((a, b) => a + b.value, 0) !== 100 && ' (must equal 100%)'}
+              </div>
+            </div>
+
+            {/* Operating Costs */}
+            <div className="bg-background-secondary rounded-2xl p-6 border border-white/10">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <CpuChipIcon className="w-5 h-5 text-red-400" />
+                Operating Costs
+              </h3>
+              <NumberInput
+                label="LLM Cost per Message"
+                value={values.costPerMessage}
+                onChange={(v) => updateValue('costPerMessage', v)}
+                prefix="$"
+                step={0.01}
+                min={0.001}
+                max={0.5}
+                description="GPT-4: ~$0.03, GPT-3.5: ~$0.002, Claude: ~$0.02"
+              />
+              <NumberInput
+                label="Monthly Infrastructure"
+                value={values.monthlyInfraCost}
+                onChange={(v) => updateValue('monthlyInfraCost', v)}
+                prefix="$"
+                step={100}
+                min={0}
+                max={10000}
+                description="Servers, databases, etc."
+              />
+              <div className="mt-4 p-3 bg-background rounded-lg text-sm">
+                <div className="flex justify-between mb-1">
+                  <span className="text-text-secondary">Total Messages</span>
+                  <span className="text-white">{formatNumber(calculations.totalMessages)}/mo</span>
+                </div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-text-secondary">LLM Costs</span>
+                  <span className="text-red-400">{formatUSD(calculations.llmCosts)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">Total Costs</span>
+                  <span className="text-red-400 font-bold">{formatUSD(calculations.totalOperatingCosts)}</span>
+                </div>
               </div>
             </div>
 
@@ -481,6 +747,16 @@ export default function TokenomicsPage() {
                 max={5}
               />
               <NumberInput
+                label="Token Holder Threshold"
+                value={values.tokenHolderThreshold}
+                onChange={(v) => updateValue('tokenHolderThreshold', v)}
+                suffix="$COSMIC"
+                step={1000}
+                min={1000}
+                max={100000}
+                description="Hold this many = unlimited chat"
+              />
+              <NumberInput
                 label="Average Tip"
                 value={values.avgTipUSD}
                 onChange={(v) => updateValue('avgTipUSD', v)}
@@ -524,12 +800,22 @@ export default function TokenomicsPage() {
                 max={1000000}
               />
               <NumberInput
-                label="Chats per User/Month"
-                value={values.chatsPerUserPerMonth}
-                onChange={(v) => updateValue('chatsPerUserPerMonth', v)}
+                label="Chats per Paying User/Mo"
+                value={values.chatsPerPayingUser}
+                onChange={(v) => updateValue('chatsPerPayingUser', v)}
                 step={5}
                 min={1}
                 max={200}
+                description="Pay-per-message users"
+              />
+              <NumberInput
+                label="Chats per Holder/Mo"
+                value={values.chatsPerHolder}
+                onChange={(v) => updateValue('chatsPerHolder', v)}
+                step={10}
+                min={1}
+                max={500}
+                description="Token holders (unlimited)"
               />
               <NumberInput
                 label="Tips per User/Month"
@@ -552,7 +838,7 @@ export default function TokenomicsPage() {
             {/* Founder Goal */}
             <div className="bg-background-secondary rounded-2xl p-6 border border-white/10">
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <CalculatorIcon className="w-5 h-5 text-red-400" />
+                <CalculatorIcon className="w-5 h-5 text-cosmic-400" />
                 Founder Goal
               </h3>
               <NumberInput
@@ -610,7 +896,7 @@ export default function TokenomicsPage() {
                     <span className="text-white">{formatUSD(calculations.monthlyChatRevenue)}</span>
                   </div>
                   <div className="text-xs text-text-tertiary">
-                    {formatNumber(calculations.monthlyChats)} messages × ${values.chatPriceUSD}
+                    {formatNumber(calculations.paidMessages)} paid messages × ${values.chatPriceUSD}
                   </div>
                 </div>
 
@@ -620,7 +906,7 @@ export default function TokenomicsPage() {
                     <span className="text-white">{formatUSD(calculations.monthlyTipRevenue)}</span>
                   </div>
                   <div className="text-xs text-text-tertiary">
-                    {formatNumber(calculations.monthlyTips)} tips × ${values.avgTipUSD} avg
+                    {formatNumber(values.monthlyActiveUsers * values.tipsPerUserPerMonth)} tips × ${values.avgTipUSD} avg
                   </div>
                 </div>
 
@@ -635,23 +921,34 @@ export default function TokenomicsPage() {
                 </div>
 
                 <div className="pt-4 border-t border-white/10">
-                  <div className="flex justify-between text-sm font-bold">
-                    <span className="text-white">Total Monthly</span>
-                    <span className="text-cosmic-400">{formatUSD(calculations.totalMonthlyRevenue)}</span>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-white">Gross Revenue</span>
+                    <span className="text-white">{formatUSD(calculations.totalMonthlyRevenue)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-red-400">- Operating Costs</span>
+                    <span className="text-red-400">{formatUSD(calculations.totalOperatingCosts)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-bold pt-2 border-t border-white/10">
+                    <span className="text-white">Net Revenue</span>
+                    <span className="text-cosmic-400">{formatUSD(calculations.netRevenue)}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Your Take */}
+            {/* Your Take - Founder Revenue */}
             <div className={`rounded-2xl p-6 border ${
               calculations.founderMeetsGoal
                 ? 'bg-green-500/10 border-green-500/30'
                 : 'bg-red-500/10 border-red-500/30'
             }`}>
-              <h3 className="text-lg font-bold text-white mb-4">
+              <h3 className="text-lg font-bold text-white mb-2">
                 {calculations.founderMeetsGoal ? '✓ You Hit Your Goal!' : '✗ Gap to Goal'}
               </h3>
+              <p className="text-xs text-text-tertiary mb-4">
+                Founder revenue comes from protocol fees on each revenue stream
+              </p>
 
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
@@ -682,10 +979,10 @@ export default function TokenomicsPage() {
                 {!calculations.founderMeetsGoal && (
                   <div className="mt-4 p-3 bg-background/50 rounded-lg">
                     <p className="text-sm text-text-secondary">
-                      Need <strong className="text-white">{formatNumber(calculations.usersNeededForGoal)} users</strong> at current rates to hit your goal.
+                      Need <strong className="text-white">{formatNumber(calculations.totalUsersNeededForGoal)} total users</strong> ({formatNumber(calculations.payingUsersNeededForGoal)} paying) at current rates.
                     </p>
                     <p className="text-xs text-text-tertiary mt-1">
-                      Each user generates ~{formatUSD(calculations.revenuePerUser)}/mo for you
+                      Each paying user generates ~{formatUSD(calculations.revenuePerPayingUser)}/mo for you
                     </p>
                   </div>
                 )}
@@ -709,8 +1006,8 @@ export default function TokenomicsPage() {
                   <span className="text-white font-medium">{formatUSD(calculations.characterMonthlyRevenue * 12)}</span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-white/10">
-                  <span className="text-text-secondary">Total Annual</span>
-                  <span className="text-cosmic-400 font-bold">{formatUSD(calculations.totalMonthlyRevenue * 12)}</span>
+                  <span className="text-text-secondary">Total Annual (Net)</span>
+                  <span className="text-cosmic-400 font-bold">{formatUSD(calculations.netRevenue * 12)}</span>
                 </div>
               </div>
             </div>
@@ -722,7 +1019,7 @@ export default function TokenomicsPage() {
           <p className="text-sm text-text-tertiary">
             This is a projection tool. Actual results depend on user adoption, market conditions, and execution.
             <br />
-            Share this page with potential investors to discuss tokenomics.
+            <span className="text-text-secondary">All revenue splits are configurable. Adjust to find the right balance.</span>
           </p>
         </div>
       </main>
