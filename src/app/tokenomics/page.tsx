@@ -44,15 +44,25 @@ const DEFAULT_VALUES = {
   tipTreasurySplit: 20,
   tipProtocolSplit: 10,
 
-  mintTreasurySplit: 40,
-  mintFounderSplit: 40,
-  mintLiquiditySplit: 20,
+  // Daily Auction splits (Nouns-style)
+  auctionTreasurySplit: 80,
+  auctionFounderSplit: 20,
+
+  // Custom character creation splits
+  customCharTreasurySplit: 50,
+  customCharFounderSplit: 50,
 
   // Pricing
   chatPriceUSD: 0.25,
   avgTipUSD: 5,
-  characterMintPriceETH: 0.1,
   ethPrice: 3500,
+
+  // Daily Auction (Nouns-style - 1 character/day = 365/year)
+  avgDailyAuctionETH: 0.5, // Average winning bid
+
+  // Custom Character Creation
+  customCharacterFeeETH: 0.25, // Fee to create your own character
+  customCharactersPerMonth: 20, // Users creating custom characters
 
   // User Funnel (percentages)
   monthlyActiveUsers: 10000,
@@ -64,7 +74,6 @@ const DEFAULT_VALUES = {
   chatsPerPayingUser: 30, // Pay-per-message users
   chatsPerHolder: 100, // Token holders chat more (it's free for them)
   tipsPerUserPerMonth: 2,
-  characterMintsPerMonth: 10,
 
   // Operating Costs
   costPerMessage: 0.02, // LLM API cost
@@ -262,10 +271,12 @@ export default function TokenomicsPage() {
       founderAllocation, treasuryAllocation, totalSupply, founderVestingYears,
       chatCharacterSplit, chatTreasurySplit, chatProtocolSplit,
       tipCharacterSplit, tipTreasurySplit, tipProtocolSplit,
-      mintTreasurySplit, mintFounderSplit,
-      chatPriceUSD, avgTipUSD, characterMintPriceETH, ethPrice,
+      auctionTreasurySplit, auctionFounderSplit,
+      customCharTreasurySplit, customCharFounderSplit,
+      chatPriceUSD, avgTipUSD, ethPrice,
+      avgDailyAuctionETH, customCharacterFeeETH, customCharactersPerMonth,
       monthlyActiveUsers, pctFreeOnly, pctPayPerMessage, pctTokenHolders,
-      chatsPerPayingUser, chatsPerHolder, tipsPerUserPerMonth, characterMintsPerMonth,
+      chatsPerPayingUser, chatsPerHolder, tipsPerUserPerMonth,
       costPerMessage, monthlyInfraCost,
       founderMonthlyNeed,
     } = values;
@@ -293,10 +304,14 @@ export default function TokenomicsPage() {
     const monthlyTips = monthlyActiveUsers * tipsPerUserPerMonth;
     const monthlyTipRevenue = monthlyTips * avgTipUSD;
 
-    // Mints
-    const monthlyMintRevenue = characterMintsPerMonth * characterMintPriceETH * ethPrice;
+    // Daily Auctions (Nouns-style: ~30 auctions/month)
+    const auctionsPerMonth = 30;
+    const monthlyAuctionRevenue = auctionsPerMonth * avgDailyAuctionETH * ethPrice;
 
-    const totalMonthlyRevenue = monthlyChatRevenue + monthlyTipRevenue + monthlyMintRevenue;
+    // Custom Character Creation
+    const monthlyCustomCharRevenue = customCharactersPerMonth * customCharacterFeeETH * ethPrice;
+
+    const totalMonthlyRevenue = monthlyChatRevenue + monthlyTipRevenue + monthlyAuctionRevenue + monthlyCustomCharRevenue;
 
     // Operating costs
     const llmCosts = totalMessages * costPerMessage;
@@ -304,16 +319,18 @@ export default function TokenomicsPage() {
     const netRevenue = totalMonthlyRevenue - totalOperatingCosts;
     const profitMargin = totalMonthlyRevenue > 0 ? (netRevenue / totalMonthlyRevenue) * 100 : 0;
 
-    // Revenue splits (from net revenue after costs)
+    // Revenue splits
     const founderFromChat = monthlyChatRevenue * (chatProtocolSplit / 100);
     const founderFromTips = monthlyTipRevenue * (tipProtocolSplit / 100);
-    const founderFromMints = monthlyMintRevenue * (mintFounderSplit / 100);
-    const founderMonthlyRevenue = founderFromChat + founderFromTips + founderFromMints;
+    const founderFromAuctions = monthlyAuctionRevenue * (auctionFounderSplit / 100);
+    const founderFromCustomChar = monthlyCustomCharRevenue * (customCharFounderSplit / 100);
+    const founderMonthlyRevenue = founderFromChat + founderFromTips + founderFromAuctions + founderFromCustomChar;
 
     const treasuryFromChat = monthlyChatRevenue * (chatTreasurySplit / 100);
     const treasuryFromTips = monthlyTipRevenue * (tipTreasurySplit / 100);
-    const treasuryFromMints = monthlyMintRevenue * (mintTreasurySplit / 100);
-    const treasuryMonthlyRevenue = treasuryFromChat + treasuryFromTips + treasuryFromMints;
+    const treasuryFromAuctions = monthlyAuctionRevenue * (auctionTreasurySplit / 100);
+    const treasuryFromCustomChar = monthlyCustomCharRevenue * (customCharTreasurySplit / 100);
+    const treasuryMonthlyRevenue = treasuryFromChat + treasuryFromTips + treasuryFromAuctions + treasuryFromCustomChar;
 
     const characterFromChat = monthlyChatRevenue * (chatCharacterSplit / 100);
     const characterFromTips = monthlyTipRevenue * (tipCharacterSplit / 100);
@@ -346,7 +363,8 @@ export default function TokenomicsPage() {
       // Revenue
       monthlyChatRevenue,
       monthlyTipRevenue,
-      monthlyMintRevenue,
+      monthlyAuctionRevenue,
+      monthlyCustomCharRevenue,
       totalMonthlyRevenue,
       // Costs
       llmCosts,
@@ -359,7 +377,8 @@ export default function TokenomicsPage() {
       characterMonthlyRevenue,
       founderFromChat,
       founderFromTips,
-      founderFromMints,
+      founderFromAuctions,
+      founderFromCustomChar,
       // Goals
       payingUsersNeededForGoal,
       totalUsersNeededForGoal,
@@ -420,26 +439,26 @@ export default function TokenomicsPage() {
             <BoltIcon className="w-5 h-5 text-cosmic-400" />
             How Cosmic Friends Makes Money
           </h2>
-          <div className="grid md:grid-cols-4 gap-4 text-sm">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
             <div className="bg-background/50 rounded-xl p-4">
               <div className="text-2xl mb-2">1</div>
-              <div className="font-medium text-white mb-1">Users Chat with AI Characters</div>
-              <div className="text-text-tertiary">Pay $0.25/message OR hold $COSMIC tokens for unlimited</div>
+              <div className="font-medium text-white mb-1">Character Auctions</div>
+              <div className="text-text-tertiary">Genesis drops → eventual Nouns-style daily auctions</div>
             </div>
             <div className="bg-background/50 rounded-xl p-4">
               <div className="text-2xl mb-2">2</div>
-              <div className="font-medium text-white mb-1">Users Tip Characters</div>
-              <div className="text-text-tertiary">Tips on posts and streams, any amount</div>
+              <div className="font-medium text-white mb-1">Chat with AI</div>
+              <div className="text-text-tertiary">$0.25/msg OR hold $COSMIC for unlimited</div>
             </div>
             <div className="bg-background/50 rounded-xl p-4">
               <div className="text-2xl mb-2">3</div>
-              <div className="font-medium text-white mb-1">Revenue Gets Split</div>
-              <div className="text-text-tertiary">Character wallet, Treasury, Protocol (founder)</div>
+              <div className="font-medium text-white mb-1">Tips</div>
+              <div className="text-text-tertiary">Tip characters on posts & streams</div>
             </div>
             <div className="bg-background/50 rounded-xl p-4">
               <div className="text-2xl mb-2">4</div>
-              <div className="font-medium text-white mb-1">Token Demand</div>
-              <div className="text-text-tertiary">Users buy $COSMIC for unlimited access + governance</div>
+              <div className="font-medium text-white mb-1">Custom Characters</div>
+              <div className="text-text-tertiary">Pay a fee to create your own character</div>
             </div>
           </div>
         </section>
@@ -610,6 +629,65 @@ export default function TokenomicsPage() {
           </div>
         </section>
 
+        {/* Character Ownership & Minting Roadmap */}
+        <section className="mb-8">
+          <div className="bg-gradient-to-r from-energy-500/10 to-accent-500/10 rounded-2xl p-6 border border-energy-500/20">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <SparklesIcon className="w-5 h-5 text-energy-400" />
+              Character Minting Roadmap
+            </h3>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              {/* Phase 1 */}
+              <div className="bg-background/50 rounded-xl p-5 border border-green-500/30">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="px-2 py-1 bg-green-500/20 rounded text-xs font-medium text-green-400">PHASE 1 - LAUNCH</div>
+                </div>
+                <h4 className="font-medium text-white mb-2">Genesis Characters</h4>
+                <ul className="text-sm text-text-tertiary space-y-2">
+                  <li>• 10-20 curated, high-quality AI characters</li>
+                  <li>• Genesis auctions for early collectors</li>
+                  <li>• Custom character creation (pay fee)</li>
+                  <li>• Focus on character quality over quantity</li>
+                </ul>
+              </div>
+
+              {/* Phase 2 */}
+              <div className="bg-background/50 rounded-xl p-5 border border-cosmic-500/30">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="px-2 py-1 bg-cosmic-500/20 rounded text-xs font-medium text-cosmic-400">PHASE 2 - SCALE</div>
+                </div>
+                <h4 className="font-medium text-white mb-2">Daily Auctions (Nouns-style)</h4>
+                <ul className="text-sm text-text-tertiary space-y-2">
+                  <li>• 1 new character minted & auctioned daily</li>
+                  <li>• 365 characters/year, perpetual expansion</li>
+                  <li>• Auction proceeds → Treasury (80%) + Founder (20%)</li>
+                  <li>• Activated once demand & community proven</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* What Ownership Means */}
+            <div className="bg-background/50 rounded-xl p-5">
+              <h4 className="font-medium text-white mb-3">What Does &quot;Owning&quot; a Character Mean?</h4>
+              <div className="grid md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <div className="text-energy-400 font-medium mb-1">Revenue Share</div>
+                  <div className="text-text-tertiary">Earn % of your character&apos;s tips and chat revenue</div>
+                </div>
+                <div>
+                  <div className="text-energy-400 font-medium mb-1">Creative Influence</div>
+                  <div className="text-text-tertiary">Shape personality, content style, and story direction</div>
+                </div>
+                <div>
+                  <div className="text-energy-400 font-medium mb-1">Governance Weight</div>
+                  <div className="text-text-tertiary">Character NFT = voting power in the DAO</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left: Inputs */}
           <div className="lg:col-span-1 space-y-6">
@@ -719,11 +797,16 @@ export default function TokenomicsPage() {
                 <Slider label="→ Protocol (You)" value={values.tipProtocolSplit} onChange={(v) => updateValue('tipProtocolSplit', v)} />
               </div>
 
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-white mb-2">Daily Auction Revenue</h4>
+                <Slider label="→ Treasury" value={values.auctionTreasurySplit} onChange={(v) => updateValue('auctionTreasurySplit', v)} />
+                <Slider label="→ Founder" value={values.auctionFounderSplit} onChange={(v) => updateValue('auctionFounderSplit', v)} />
+              </div>
+
               <div>
-                <h4 className="text-sm font-medium text-white mb-2">Mint Revenue</h4>
-                <Slider label="→ Treasury" value={values.mintTreasurySplit} onChange={(v) => updateValue('mintTreasurySplit', v)} />
-                <Slider label="→ Founder" value={values.mintFounderSplit} onChange={(v) => updateValue('mintFounderSplit', v)} />
-                <Slider label="→ Liquidity" value={values.mintLiquiditySplit} onChange={(v) => updateValue('mintLiquiditySplit', v)} />
+                <h4 className="text-sm font-medium text-white mb-2">Custom Character Revenue</h4>
+                <Slider label="→ Treasury" value={values.customCharTreasurySplit} onChange={(v) => updateValue('customCharTreasurySplit', v)} />
+                <Slider label="→ Founder" value={values.customCharFounderSplit} onChange={(v) => updateValue('customCharFounderSplit', v)} />
               </div>
             </div>
           </div>
@@ -766,15 +849,6 @@ export default function TokenomicsPage() {
                 max={100}
               />
               <NumberInput
-                label="Character Mint Price"
-                value={values.characterMintPriceETH}
-                onChange={(v) => updateValue('characterMintPriceETH', v)}
-                suffix="ETH"
-                step={0.01}
-                min={0.01}
-                max={10}
-              />
-              <NumberInput
                 label="ETH Price (USD)"
                 value={values.ethPrice}
                 onChange={(v) => updateValue('ethPrice', v)}
@@ -783,6 +857,54 @@ export default function TokenomicsPage() {
                 min={1000}
                 max={10000}
               />
+            </div>
+
+            {/* Daily Auctions & Custom Characters */}
+            <div className="bg-gradient-to-br from-energy-500/10 to-accent-500/10 rounded-2xl p-6 border border-energy-500/20">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <SparklesIcon className="w-5 h-5 text-energy-400" />
+                Character Minting
+                <span className="text-xs font-normal text-cosmic-400 ml-2">(Phase 2 - At Scale)</span>
+              </h3>
+              <p className="text-xs text-text-tertiary mb-4">Future state: Nouns-style daily auctions once community is proven. See roadmap above.</p>
+              <NumberInput
+                label="Avg Daily Auction Bid"
+                value={values.avgDailyAuctionETH}
+                onChange={(v) => updateValue('avgDailyAuctionETH', v)}
+                suffix="ETH"
+                step={0.1}
+                min={0.01}
+                max={10}
+                description="Phase 2: Average winning bid per daily auction"
+              />
+              <NumberInput
+                label="Custom Character Fee"
+                value={values.customCharacterFeeETH}
+                onChange={(v) => updateValue('customCharacterFeeETH', v)}
+                suffix="ETH"
+                step={0.05}
+                min={0.01}
+                max={5}
+                description="Fee to create your own character"
+              />
+              <NumberInput
+                label="Custom Chars Created/Mo"
+                value={values.customCharactersPerMonth}
+                onChange={(v) => updateValue('customCharactersPerMonth', v)}
+                step={5}
+                min={0}
+                max={200}
+              />
+              <div className="mt-4 p-3 bg-background/50 rounded-lg text-sm">
+                <div className="flex justify-between mb-1">
+                  <span className="text-text-secondary">Auction Revenue/Mo</span>
+                  <span className="text-energy-400">{formatUSD(calculations.monthlyAuctionRevenue)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">Custom Char Revenue/Mo</span>
+                  <span className="text-accent-400">{formatUSD(calculations.monthlyCustomCharRevenue)}</span>
+                </div>
+              </div>
             </div>
 
             {/* Volume Projections */}
@@ -824,14 +946,6 @@ export default function TokenomicsPage() {
                 step={1}
                 min={0}
                 max={50}
-              />
-              <NumberInput
-                label="Character Mints/Month"
-                value={values.characterMintsPerMonth}
-                onChange={(v) => updateValue('characterMintsPerMonth', v)}
-                step={1}
-                min={0}
-                max={100}
               />
             </div>
 
@@ -912,11 +1026,21 @@ export default function TokenomicsPage() {
 
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-text-secondary">Mint Revenue</span>
-                    <span className="text-white">{formatUSD(calculations.monthlyMintRevenue)}</span>
+                    <span className="text-text-secondary">Auction Revenue</span>
+                    <span className="text-white">{formatUSD(calculations.monthlyAuctionRevenue)}</span>
                   </div>
                   <div className="text-xs text-text-tertiary">
-                    {values.characterMintsPerMonth} mints × {values.characterMintPriceETH} ETH
+                    ~30 auctions × {values.avgDailyAuctionETH} ETH avg
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-text-secondary">Custom Char Revenue</span>
+                    <span className="text-white">{formatUSD(calculations.monthlyCustomCharRevenue)}</span>
+                  </div>
+                  <div className="text-xs text-text-tertiary">
+                    {values.customCharactersPerMonth} creations × {values.customCharacterFeeETH} ETH
                   </div>
                 </div>
 
@@ -960,8 +1084,12 @@ export default function TokenomicsPage() {
                   <span className="text-white">{formatUSD(calculations.founderFromTips)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">From Mints ({values.mintFounderSplit}%)</span>
-                  <span className="text-white">{formatUSD(calculations.founderFromMints)}</span>
+                  <span className="text-text-secondary">From Auctions ({values.auctionFounderSplit}%)</span>
+                  <span className="text-white">{formatUSD(calculations.founderFromAuctions)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">From Custom Chars ({values.customCharFounderSplit}%)</span>
+                  <span className="text-white">{formatUSD(calculations.founderFromCustomChar)}</span>
                 </div>
                 <div className="pt-3 border-t border-white/20">
                   <div className="flex justify-between font-bold">
